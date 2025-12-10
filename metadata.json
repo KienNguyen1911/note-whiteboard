@@ -1,0 +1,5 @@
+{
+  "name": "MyWhiteboard Notes",
+  "description": "Một ứng dụng ghi chú dạng bảng trắng (whiteboard) cá nhân, cho phép tạo, di chuyển và lưu trữ các ghi chú một cách trực quan.",
+  "requestFramePermissions": []
+}
