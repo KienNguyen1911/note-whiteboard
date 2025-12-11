@@ -15,6 +15,23 @@ const App: React.FC = () => {
     offsetY: 0,
   });
 
+  // Resize state
+  const [resizeState, setResizeState] = useState<{
+    isResizing: boolean;
+    noteId: string | null;
+    startX: number;
+    startY: number;
+    startWidth: number;
+    startHeight: number;
+  }>({
+    isResizing: false,
+    noteId: null,
+    startX: 0,
+    startY: 0,
+    startWidth: 0,
+    startHeight: 0,
+  });
+
   // Create debounced save function
   const debouncedUpdateContent = useRef(
     debounce((id: string, content: string) => {
@@ -68,6 +85,62 @@ const App: React.FC = () => {
       console.log("Change color", id, color);
   }, []);
 
+  // --- Resize Logic ---
+
+  const handleResizeStart = (e: React.PointerEvent, noteId: string) => {
+    const note = notes.find(n => n.id === noteId);
+    if (!note) return;
+
+    e.preventDefault();
+    e.stopPropagation();
+    (e.target as Element).setPointerCapture(e.pointerId);
+
+    setResizeState({
+      isResizing: true,
+      noteId,
+      startX: e.clientX,
+      startY: e.clientY,
+      startWidth: note.width,
+      startHeight: note.height,
+    });
+  };
+
+  const handleResizeMove = (e: React.PointerEvent) => {
+    if (!resizeState.isResizing || !resizeState.noteId) return;
+
+    const deltaX = e.clientX - resizeState.startX;
+    const deltaY = e.clientY - resizeState.startY;
+
+    const newWidth = Math.max(150, resizeState.startWidth + deltaX);
+    const newHeight = Math.max(120, resizeState.startHeight + deltaY);
+
+    setNotes(prev =>
+      prev.map(n =>
+        n.id === resizeState.noteId
+          ? { ...n, width: newWidth, height: newHeight }
+          : n
+      )
+    );
+  };
+
+  const handleResizeEnd = async (e: React.PointerEvent) => {
+    if (resizeState.isResizing && resizeState.noteId) {
+      const note = notes.find(n => n.id === resizeState.noteId);
+      if (note) {
+        await NoteService.updateNote(note);
+      }
+    }
+
+    setResizeState({
+      isResizing: false,
+      noteId: null,
+      startX: 0,
+      startY: 0,
+      startWidth: 0,
+      startHeight: 0,
+    });
+  };
+
   // --- Drag Logic ---
 
   const handlePointerDown = (e: React.PointerEvent, noteId: string) => {
@@ -94,6 +167,25 @@ const App: React.FC = () => {
   };
 
   const handlePointerMove = (e: React.PointerEvent) => {
+    // Handle resize move (priority over drag)
+    if (resizeState.isResizing && resizeState.noteId) {
+      const deltaX = e.clientX - resizeState.startX;
+      const deltaY = e.clientY - resizeState.startY;
+
+      const newWidth = Math.max(150, resizeState.startWidth + deltaX);
+      const newHeight = Math.max(120, resizeState.startHeight + deltaY);
+
+      setNotes(prev =>
+        prev.map(n =>
+          n.id === resizeState.noteId
+            ? { ...n, width: newWidth, height: newHeight }
+            : n
+        )
+      );
+      return;
+    }
+
+    // Handle drag move
     if (!dragState.isDragging || !dragState.noteId) return;
 
     const newX = e.clientX - dragState.offsetX;
@@ -115,6 +207,9 @@ const App: React.FC = () => {
         await NoteService.updatePosition(note.id, note.x, note.y, note.zIndex);
       }
     }
+
+    // Handle resize end
+    handleResizeEnd(e);
 
     setDragState({
       isDragging: false,
@@ -162,6 +257,7 @@ const App: React.FC = () => {
           onUpdateContent={handleUpdateContent}
           onDelete={handleDeleteNote}
           onChangeColor={handleChangeColor}
+          onResizeStart={handleResizeStart}
         />
       ))}
 

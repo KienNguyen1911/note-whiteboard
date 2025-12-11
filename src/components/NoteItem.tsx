@@ -8,6 +8,7 @@ interface NoteItemProps {
   onUpdateContent: (id: string, content: string) => void;
   onDelete: (id: string) => void;
   onChangeColor: (id: string, color: NoteColor) => void;
+  onResizeStart: (e: React.PointerEvent, noteId: string) => void;
 }
 
 export const NoteItem: React.FC<NoteItemProps> = ({ 
@@ -15,7 +16,8 @@ export const NoteItem: React.FC<NoteItemProps> = ({
   onMouseDown, 
   onUpdateContent,
   onDelete,
-  onChangeColor
+  onChangeColor,
+  onResizeStart,
 }) => {
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const [isHovered, setIsHovered] = useState(false);
@@ -78,7 +80,10 @@ export const NoteItem: React.FC<NoteItemProps> = ({
       </div>
 
       {/* Footer / Resizer (Visual only for now) */}
-      <div className="h-3 w-full cursor-se-resize flex justify-end px-1 absolute bottom-0 right-0 opacity-0 hover:opacity-100">
+      <div 
+        className="h-3 w-full cursor-se-resize flex justify-end px-1 absolute bottom-0 right-0 opacity-0 hover:opacity-100"
+        onPointerDown={(e) => onResizeStart(e as React.PointerEvent, note.id)}
+      >
          <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-slate-400"><path d="m21 15-6 6"/><path d="m21 3-18 18"/></svg>
       </div>
     </div>
