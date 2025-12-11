@@ -4,6 +4,7 @@ import { NoteService } from './services/noteService';
 import { NoteItem } from './components/NoteItem';
 import { Toolbar } from './components/Toolbar';
 import { DEFAULT_NOTE_COLOR } from './constants';
+import { debounce } from './utils/debounce';
 
 const App: React.FC = () => {
   const [notes, setNotes] = useState<Note[]>([]);
@@ -13,6 +14,15 @@ const App: React.FC = () => {
     offsetX: 0,
     offsetY: 0,
   });
+
+  // Create debounced save function
+  const debouncedUpdateContent = useRef(
+    debounce((id: string, content: string) => {
+      NoteService.updateContent(id, content).catch(err => 
+        console.error('Failed to save content:', err)
+      );
+    }, 1000)
+  ).current;
 
   // Load notes on mount
   useEffect(() => {
@@ -35,12 +45,12 @@ const App: React.FC = () => {
     setNotes(prev => [...prev, newNote]);
   };
 
-  const handleUpdateContent = useCallback(async (id: string, content: string) => {
-    // Optimistic update
+  const handleUpdateContent = useCallback((id: string, content: string) => {
+    // Optimistic update - cập nhật UI ngay lập tức
     setNotes(prev => prev.map(n => n.id === id ? { ...n, content } : n));
-    // Debounce save in a real app, but here we just call service
-    await NoteService.updateContent(id, content);
-  }, []);
+    // Gọi debounced save - chỉ gửi request sau 1s khi user dừng gõ
+    debouncedUpdateContent(id, content);
+  }, [debouncedUpdateContent]);
 
   const handleDeleteNote = useCallback(async (id: string) => {
     await NoteService.deleteNote(id);
@@ -102,7 +112,7 @@ const App: React.FC = () => {
       // Persist the final position
       const note = notes.find(n => n.id === dragState.noteId);
       if (note) {
-        await NoteService.updatePosition(note.id, note.x, note.y);
+        await NoteService.updatePosition(note.id, note.x, note.y, note.zIndex);
       }
     }
 
