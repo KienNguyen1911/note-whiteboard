@@ -9,6 +9,7 @@ interface NoteItemProps {
   onDelete: (id: string) => void;
   onChangeColor: (id: string, color: NoteColor) => void;
   onResizeStart: (e: React.PointerEvent, noteId: string) => void;
+  isSelected?: boolean;
 }
 
 export const NoteItem: React.FC<NoteItemProps> = ({ 
@@ -18,6 +19,7 @@ export const NoteItem: React.FC<NoteItemProps> = ({
   onDelete,
   onChangeColor,
   onResizeStart,
+  isSelected,
 }) => {
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const [isHovered, setIsHovered] = useState(false);
@@ -36,7 +38,8 @@ export const NoteItem: React.FC<NoteItemProps> = ({
 
   return (
     <div
-      className={`absolute flex flex-col shadow-lg rounded-lg transition-shadow duration-200 ${note.color} ${isHovered ? 'shadow-xl ring-2 ring-blue-400/30' : ''}`}
+      className={`absolute flex flex-col shadow-lg rounded-lg transition-shadow duration-200 ${note.color} ${isHovered ? 'shadow-xl ring-2 ring-blue-400/30' : ''} ${isSelected ? 'ring-2 ring-blue-600 shadow-2xl z-50' : ''}`}
+
       style={{
         left: note.x,
         top: note.y,

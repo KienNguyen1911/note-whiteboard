@@ -31,3 +31,8 @@ export interface DragState {
   offsetX: number;
   offsetY: number;
 }
+
+export interface ViewState {
+  scale: number;
+  offset: Position;
+}
