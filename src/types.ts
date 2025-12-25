@@ -12,8 +12,15 @@ export interface Position {
   y: number;
 }
 
+export interface Page {
+  id: string;
+  title: string;
+  createdAt: number;
+}
+
 export interface Note {
   id: string;
+  pageId: string; // Foreign key to Page
   content: string;
   x: number;
   y: number;

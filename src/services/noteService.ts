@@ -23,11 +23,15 @@ export const NoteService = {
   /**
    * Lấy tất cả notes từ Supabase (SELECT * FROM notes)
    */
-  getAllNotes: async (): Promise<Note[]> => {
+  /**
+   * Lấy tất cả notes của một page
+   */
+  getAllNotes: async (pageId: string): Promise<Note[]> => {
     try {
       const { data, error } = await supabase
         .from(TABLE_NAME)
         .select('*')
+        .eq('page_id', pageId) // Filter by page
         .order('z_index', { ascending: true });
 
       if (error) {
@@ -38,6 +42,7 @@ export const NoteService = {
       // Convert snake_case from DB to camelCase for app
       return (data as any[]).map(note => ({
         id: note.id,
+        pageId: note.page_id,
         content: note.content,
         x: note.x,
         y: note.y,
@@ -57,15 +62,16 @@ export const NoteService = {
   /**
    * Tạo note mới trong Supabase (INSERT INTO notes ...)
    */
-  createNote: async (x: number, y: number, color: NoteColor): Promise<Note> => {
+  createNote: async (pageId: string, x: number, y: number, color: NoteColor): Promise<Note> => {
     try {
-      const notes = await NoteService.getAllNotes();
-      
+      const notes = await NoteService.getAllNotes(pageId);
+
       // Tìm max z-index
       const maxZ = notes.length > 0 ? Math.max(...notes.map(n => n.zIndex)) : 0;
 
       const newNote: Note = {
         id: generateId(),
+        pageId,
         content: '',
         x,
         y,
@@ -82,6 +88,7 @@ export const NoteService = {
         .from(TABLE_NAME)
         .insert([{
           id: newNote.id,
+          page_id: newNote.pageId,
           content: newNote.content,
           x: roundToInt(newNote.x),
           y: roundToInt(newNote.y),
@@ -104,6 +111,7 @@ export const NoteService = {
       const dbData = data as any;
       return {
         id: dbData.id,
+        pageId: dbData.page_id,
         content: dbData.content,
         x: dbData.x,
         y: dbData.y,
